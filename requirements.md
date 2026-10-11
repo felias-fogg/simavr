@@ -16,7 +16,8 @@ and the floor of an archive is the maximum over everything in it.
 | `simavr-linux_armv7l.tar.gz` | GLIBC 2.28, ARMv7, hard float | Debian 10, Raspberry Pi OS buster and later |
 | `simavr-darwin_x86_64.tar.gz` | macOS 10.15 | Intel Macs |
 | `simavr-darwin_arm64.tar.gz` | macOS 11.0 | Apple Silicon |
-| `simavr-windows_amd64.tar.gz` | Windows 10 | 64 bit only |
+| `simavr-windows_amd64.tar.gz` | Windows 10 | 64 bit |
+| `simavr-windows_x86.tar.gz` | Windows Vista | 32 bit, and what the old Arduino IDE downloads |
 
 GLIBC is backward compatible, so a newer system runs these binaries as well. The
 arm archives ask for less than the system they were built on (Raspberry Pi OS
@@ -28,8 +29,19 @@ Each archive carries what it needs. On Linux that means `libsimavr`, and beside
 it `libelf` and `libz`, found through an RPATH of `$ORIGIN`; only the C library
 itself comes from the system. On macOS `libelf` and `libsimavr` are linked
 statically and the binary names nothing but `/usr/lib/libSystem.B.dylib`. On
-Windows the Universal CRT comes from the operating system, which is what makes
-Windows 10 the floor, and any other DLL sits next to `simavr.exe`.
+Windows the C runtime comes from the operating system, and which one that is
+decides the floor.
+
+The two Windows archives differ there, and the difference is not a typo. The 64
+bit build uses the MSYS2 UCRT64 environment, so it imports the Universal CRT
+(`api-ms-win-crt-*`), which is part of Windows 10 and only reaches older systems
+through a redistributable. MSYS2 has no 32 bit counterpart to that environment:
+MINGW32 is its only i686 environment, and it links the old `msvcrt.dll` that
+every Windows has carried since NT. The 32 bit archive therefore asks for less
+than the 64 bit one. Beyond its C runtime it imports nothing but `kernel32.dll`
+and `ws2_32.dll`, and none of the functions that arrived with Vista or later, so
+Vista is a conservative statement rather than a measured one; the oldest Windows
+we actually run it on is the one on the GitHub runner.
 
 The graphical parts of simavr are not in these archives. `make install-simavr`
 installs the simulator and its library, not `libsimavrparts`, so no archive

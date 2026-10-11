@@ -140,9 +140,15 @@ Windows 7, so the client cannot start on Vista" ;;
     # XP, only that these particular names are absent. But finding something
     # confirms that _WIN32_WINNT=0x0600 is a real requirement and not a habit.
     echo "--- functions that are Vista or newer (informational) ---"
-    "$OD" -p "$BIN" \
-      | grep -oE '\b(GetTickCount64|InitializeConditionVariable|SleepConditionVariableCS|InitializeSRWLock|AcquireSRWLockExclusive|CreateSymbolicLinkW|GetFinalPathNameByHandleW|InetNtopW|CancelIoEx|GetThreadId)\b' \
-      | sort -u | sed 's/^/  /' || echo "  (none of the names we look for)"
+    # The pipeline has to go into a variable: with sed at the end, the
+    # exit status is sed's, so a "|| echo" after it could never fire and
+    # finding nothing would print nothing at all.
+    NEWER=$("$OD" -p "$BIN" | grep -oE '\b(GetTickCount64|InitializeConditionVariable|SleepConditionVariableCS|InitializeSRWLock|AcquireSRWLockExclusive|CreateSymbolicLinkW|GetFinalPathNameByHandleW|InetNtopW|CancelIoEx|GetThreadId)\b' | sort -u || true)
+    if [ -n "$NEWER" ]; then
+      echo "$NEWER" | sed 's/^/  /'
+    else
+      echo "  (none of the names we look for)"
+    fi
 
     echo "OK: nothing in the import table of $BIN demands more than Windows $FLOOR"
     exit 0
